@@ -1,0 +1,47 @@
+# Source files (users only need dist)
+src/
+*.ts
+!*.d.ts
+
+# Test files
+**/__tests__/
+*.test.*
+*.spec.*
+vitest.config.ts
+
+# Development files
+.eslintrc.json
+.prettierrc
+.editorconfig
+tsconfig.json
+tsup.config.ts
+
+# GitHub specific
+.github/workflows/ci.yml
+
+# Output directory (temporary files)
+output/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep these files
+!dist/
+!action.yml
+!.github/workflows/tea-rank-badge.yml.example
+!.github/tea-rank-badge.svg
