@@ -1,28 +1,31 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { log, setLogLevel } from './log.js';
 import { TeaAPIClient } from './api/tea.js';
 import { createTeaRankBadge } from './badge.js';
 import { updateReadme } from './readme.js';
 import { writeIfChanged } from './io.js';
 import { getConfig } from './config.js';
-import { log, setLogLevel } from './log.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import type { CLIOptions } from './types.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Get package version
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const packageJson = JSON.parse(
-  readFileSync(join(__dirname, '../package.json'), 'utf-8')
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')
 );
+const VERSION = packageJson.version;
 
 const program = new Command();
 
 program
   .name('tea-rank-badge')
-  .version(packageJson.version)
-  .description('Generate and update teaRank badges for your OSS projects');
+  .description('Generate and update teaRank badges for Tea Protocol projects')
+  .version(VERSION);
 
 // Main update command (default)
 program
