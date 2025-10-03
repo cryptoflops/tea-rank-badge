@@ -128,8 +128,16 @@ runs:
         echo "Running: npx -y tea-rank-badge@latest update $CLI_ARGS"
         eval "npx -y tea-rank-badge@latest update $CLI_ARGS"
         
+        # Build print command arguments (only project identification)
+        PRINT_ARGS=""
+        if [ -n "${{ inputs.project_id }}" ]; then
+          PRINT_ARGS="--project-id '${{ inputs.project_id }}'"
+        elif [ -n "${{ inputs.project_name }}" ]; then
+          PRINT_ARGS="--name '${{ inputs.project_name }}'"
+        fi
+        
         # Capture the rank from print command for output
-        RANK=$(npx -y tea-rank-badge@latest print $CLI_ARGS 2>/dev/null | grep -oE '[0-9]+\.?[0-9]*' | head -1)
+        RANK=$(npx -y tea-rank-badge@latest print $PRINT_ARGS --quiet 2>/dev/null || echo "0")
         echo "rank=$RANK" >> $GITHUB_OUTPUT
 
     - name: Check for changes
