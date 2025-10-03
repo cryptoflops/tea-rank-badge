@@ -16,6 +16,8 @@
 
 `tea-rank-badge` is a CLI tool and GitHub Action that fetches your project's teaRank from the [Tea Protocol](https://tea.xyz) and generates a beautiful SVG badge. The badge updates automatically via GitHub Actions, with no external services required.
 
+🎬 **[See it in action](https://github.com/cryptoflops/tea-rank-badge-demo)** - Live demo repository with automatic updates!
+
 ### Features
 
 - 🚀 **Zero-config**: Works out of the box with sensible defaults
