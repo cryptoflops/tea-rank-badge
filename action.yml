@@ -1,0 +1,166 @@
+name: 'Tea Rank Badge'
+description: 'Automatically update teaRank badges for your Tea Protocol OSS projects'
+author: 'cryptoflops'
+branding:
+  icon: 'award'
+  color: 'green'
+
+inputs:
+  project_id:
+    description: 'Tea Protocol project ID (preferred over project_name)'
+    required: false
+  project_name:
+    description: 'Project name to search for (used if project_id not provided)'
+    required: false
+  readme_path:
+    description: 'Path to README file'
+    required: false
+    default: 'README.md'
+  svg_path:
+    description: 'Path where SVG badge will be saved'
+    required: false
+    default: '.github/tea-rank-badge.svg'
+  label:
+    description: 'Badge label text'
+    required: false
+    default: 'teaRank'
+  style:
+    description: 'Badge style (flat, flat-square, plastic, for-the-badge)'
+    required: false
+    default: 'flat'
+  precision:
+    description: 'Number of decimal places for rank display'
+    required: false
+    default: '0'
+  base_url:
+    description: 'Tea API base URL'
+    required: false
+    default: 'https://api.sepolia.app.tea.xyz/'
+  timeout_ms:
+    description: 'API request timeout in milliseconds'
+    required: false
+    default: '10000'
+  retries:
+    description: 'Number of API retry attempts'
+    required: false
+    default: '3'
+  dry_run:
+    description: 'Run in dry-run mode without making changes'
+    required: false
+    default: 'false'
+  commit_message:
+    description: 'Git commit message for badge updates'
+    required: false
+    default: 'chore: update teaRank badge [skip ci]'
+  no_readme:
+    description: 'Skip README update, only generate SVG'
+    required: false
+    default: 'false'
+  insert:
+    description: 'Insert badge section if markers not found'
+    required: false
+    default: 'true'
+
+outputs:
+  rank:
+    description: 'The current teaRank score'
+    value: ${{ steps.badge.outputs.rank }}
+  changed:
+    description: 'Whether files were changed'
+    value: ${{ steps.check.outputs.changed }}
+  svg_path:
+    description: 'Path to the generated SVG badge'
+    value: ${{ inputs.svg_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Run tea-rank-badge CLI
+      id: badge
+      shell: bash
+      run: |
+        # Build CLI arguments
+        CLI_ARGS=""
+        
+        # Project identification
+        if [ -n "${{ inputs.project_id }}" ]; then
+          CLI_ARGS="$CLI_ARGS --project-id '${{ inputs.project_id }}'"
+        elif [ -n "${{ inputs.project_name }}" ]; then
+          CLI_ARGS="$CLI_ARGS --name '${{ inputs.project_name }}'"
+        else
+          echo "Error: Either project_id or project_name must be provided"
+          exit 1
+        fi
+        
+        # Paths
+        CLI_ARGS="$CLI_ARGS --svg-path '${{ inputs.svg_path }}'"
+        CLI_ARGS="$CLI_ARGS --readme-path '${{ inputs.readme_path }}'"
+        
+        # Badge options
+        CLI_ARGS="$CLI_ARGS --label '${{ inputs.label }}'"
+        CLI_ARGS="$CLI_ARGS --style '${{ inputs.style }}'"
+        CLI_ARGS="$CLI_ARGS --precision '${{ inputs.precision }}'"
+        
+        # API configuration
+        CLI_ARGS="$CLI_ARGS --base-url '${{ inputs.base_url }}'"
+        CLI_ARGS="$CLI_ARGS --timeout-ms '${{ inputs.timeout_ms }}'"
+        CLI_ARGS="$CLI_ARGS --retries '${{ inputs.retries }}'"
+        
+        # Flags
+        if [ "${{ inputs.dry_run }}" = "true" ]; then
+          CLI_ARGS="$CLI_ARGS --dry-run"
+        fi
+        
+        if [ "${{ inputs.no_readme }}" = "true" ]; then
+          CLI_ARGS="$CLI_ARGS --no-readme"
+        fi
+        
+        if [ "${{ inputs.insert }}" = "false" ]; then
+          CLI_ARGS="$CLI_ARGS --no-insert"
+        fi
+        
+        # Run the CLI
+        echo "Running: npx -y tea-rank-badge@latest update $CLI_ARGS"
+        eval "npx -y tea-rank-badge@latest update $CLI_ARGS"
+        
+        # Capture the rank from print command for output
+        RANK=$(npx -y tea-rank-badge@latest print $CLI_ARGS 2>/dev/null | grep -oE '[0-9]+\.?[0-9]*' | head -1)
+        echo "rank=$RANK" >> $GITHUB_OUTPUT
+
+    - name: Check for changes
+      id: check
+      shell: bash
+      run: |
+        if [ "${{ inputs.dry_run }}" = "true" ]; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Check if files have changed
+        if git diff --quiet HEAD -- "${{ inputs.svg_path }}" "${{ inputs.readme_path }}"; then
+          echo "No changes detected"
+          echo "changed=false" >> $GITHUB_OUTPUT
+        else
+          echo "Changes detected"
+          echo "changed=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push changes
+      if: steps.check.outputs.changed == 'true' && inputs.dry_run != 'true'
+      shell: bash
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add "${{ inputs.svg_path }}"
+        if [ "${{ inputs.no_readme }}" != "true" ]; then
+          git add "${{ inputs.readme_path }}"
+        fi
+        
+        git commit -m "${{ inputs.commit_message }}"
+        git push

@@ -1,0 +1,66 @@
+name: Update Tea Rank Badge
+
+on:
+  # Run daily at 2:20 AM UTC
+  schedule:
+    - cron: '20 2 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+  
+  # Optional: Run on push to main branch
+  # push:
+  #   branches: [ main ]
+  #   paths:
+  #     - 'README.md'  # Only when README changes
+
+permissions:
+  contents: write  # Required to commit and push changes
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate git operations
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update teaRank Badge
+        uses: cryptoflops/tea-rank-badge@v1
+        with:
+          # REQUIRED: Specify either project_id or project_name
+          # project_id: '123456'  # Preferred - use if you know your Tea Protocol project ID
+          project_name: 'your-project-name'  # Fallback - searches by name
+          
+          # OPTIONAL: Customize paths (defaults shown)
+          # svg_path: '.github/tea-rank-badge.svg'
+          # readme_path: 'README.md'
+          
+          # OPTIONAL: Customize badge appearance (defaults shown)
+          # label: 'teaRank'
+          # style: 'flat'  # Options: flat, flat-square, plastic, for-the-badge
+          # precision: '0'  # Decimal places for rank display
+          
+          # OPTIONAL: Control behavior (defaults shown)
+          # no_readme: 'false'  # Set to 'true' to only generate SVG without README update
+          # insert: 'true'  # Set to 'false' to not insert markers if missing
+          # dry_run: 'false'  # Set to 'true' to preview changes without committing
+          
+          # OPTIONAL: Customize commit message
+          # commit_message: 'chore: update teaRank badge [skip ci]'
+          
+          # OPTIONAL: API configuration (defaults shown)
+          # base_url: 'https://api.sepolia.app.tea.xyz/'
+          # timeout_ms: '10000'
+          # retries: '3'
+
+      # Optional: Use the outputs
+      - name: Display rank
+        if: success()
+        run: |
+          echo "Current teaRank: ${{ steps.update-badge.outputs.rank }}"
+          echo "Files changed: ${{ steps.update-badge.outputs.changed }}"
+          echo "Badge location: ${{ steps.update-badge.outputs.svg_path }}"
