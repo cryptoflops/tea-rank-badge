@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "tea-rank-badge": "./dist/cli.js"
+    "tea-rank-badge": "dist/cli.js"
   },
   "scripts": {
     "build": "tsup",
@@ -34,7 +34,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cryptoflops/tea-rank-badge.git"
+    "url": "git+https://github.com/cryptoflops/tea-rank-badge.git"
   },
   "bugs": {
     "url": "https://github.com/cryptoflops/tea-rank-badge/issues"
